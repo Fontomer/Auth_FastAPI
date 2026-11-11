@@ -23,9 +23,11 @@ COOKIE_NAME = os.getenv('JWT_ACCESS_COOKIE_NAME')
 config = AuthXConfig()
 config.JWT_SECRET_KEY = SECRET_KEY #получаем секретный ключ из окружения
 config.JWT_ACCESS_COOKIE_NAME = COOKIE_NAME
-config.JWT_TOKEN_LOCATION = ["cookies"]
+config.JWT_TOKEN_LOCATION = ['headers', 'cookies']
+config.JWT_COOKIE_CSRF_PROTECT = False
 
 security = AuthX(config=config)
+security.handle_errors(app)
 
 # -------commands-------
 @app.post('/register')
@@ -48,13 +50,15 @@ def register(user_data: UserCreate, db: Session = Depends(get_db)): #созда�
 
 
 @app.delete('/delete-user')
-def delete_user(user_data: UserDel,current_user_id: str = Depends(
-        security.access_token_required
-    ),
-    db: Session = Depends(get_db)):
-    
+def delete_user(
+    user_data: UserDel,
+    token_payload=Depends(security.access_token_required),
+    db: Session = Depends(get_db),
+):
+    current_user_id = token_payload.sub
+    #проверяем, является ли тот, кто отправляет запрос, администратором
     current_admin = (
-        db.query(User).filter(User.id == int(current_user_id)).first() #проверяем, является ли тот, кто отправляет запрос, администратором
+      db.query(User).filter(User.id == int(current_user_id)).first()
     )
     if not current_admin or not current_admin.is_admin:
         raise HTTPException(
@@ -81,8 +85,10 @@ def login(
         user_data.password, user.hashed_pw
     ):
         raise HTTPException(status_code=401, detail='Incorrect username or password')
+    
     access_token = security.create_access_token(uid=str(user.id)) #создает токен с id пользователя
-    response.set_cookie(key=config.JWT_ACCESS_COOKIE_NAME, value=access_token) #добавляет токен в куки браузера
+    
+    security.set_access_cookies(access_token, response) #добавляет токен в куки браузера
 
     return {'access_token': access_token, 'message': 'Logged in successfully!'}
 
