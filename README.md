@@ -35,3 +35,50 @@ Auth_FastAPI/
 ├── .env             # Переменные окружения (скрыто в gitignore)
 ├── .gitignore       # Игнорируемые файлы и папки
 └── requirements.txt # Зависимости проекта
+```
+
+---
+
+## ⚙️ Установка и запуск
+
+1. Клонируйте репозиторий
+```bash
+git clone (https://github.com/Fontomer/Auth_FastAPI.git)
+cd Auth_FastAPI
+```
+
+2. Создайте и активируйте виртуальное окружение
+```bash
+python -m venv .venv
+# Для macOS / Linux:
+source .venv/bin/activate
+# Для Windows:
+# .venv\Scripts\activate
+```
+
+3. Установите зависимости
+```bash
+pip install fastapi uvicorn sqlalchemy authx passlib python-dotenv
+```
+
+4. Настройте переменные окружения
+Создайте файл `.env` в корне проекта и добавьте секретный ключ:
+```
+JWT_SECRET_KEY=ваш_очень_длинный_и_секретный_ключ
+```
+
+5. Запустите сервер разработки
+```bash
+uvicorn main:app --reload
+# либо
+fastapi dev main.py
+```
+Приложение будет доступно по адресу: `http://127.0.0.1:8000`
+Документация Swagger UI для тестирования: `http://127.0.0.1:8000/docs`
+
+## 📌 Использование API
+1. Регистрация (POST /register): Передайте username и password. Первый зарегистрированный пользователь автоматически получает права администратора.
+
+2. Вход (POST /login): Авторизуйтесь, после чего токен автоматически сохранится в куках браузера.
+
+3. Удаление пользователя (DELETE /delete-user): Требуется токен администратора и ID пользователя в теле запроса.
