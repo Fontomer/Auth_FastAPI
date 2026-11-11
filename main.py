@@ -51,21 +51,32 @@ def register(user_data: UserCreate, db: Session = Depends(get_db)): #созда�
 
     return {'message': 'user registered!'}
 
+
+
 @app.delete('/delete-user')
-def delete(user_data: UserDel, db: Session = Depends(get_db)): 
-    existing_user = (
-        db.query(User).filter(User.id == user_data.id).first() #ищет пользователя с таким ID 
+def delete_user(user_data: UserDel,current_user_id: str = Depends(
+        security.access_token_required
+    ),
+    db: Session = Depends(get_db)):
+    
+    current_admin = (
+        db.query(User).filter(User.id == int(current_user_id)).first() #проверяем, является ли тот, кто отправляет запрос, администратором
     )
-    if existing_user:
-        raise HTTPException(status_code=401, detail='Incorrect user ID') 
+    if not current_admin or not current_admin.is_admin:
+        raise HTTPException(
+            status_code=403, detail="Not enough privileges (Admin only)"
+        )
+    
+    user_to_delete = db.query(User).filter(User.id == user_data.id).first() #ищем пользователя, которого нужно удалить, по переданному ID
+    if not user_to_delete:
+        raise HTTPException(status_code=404, detail="User not found") #если пользователя с таким ID в базе нет — возвращаем 404 ошибку
+
+    db.delete(user_to_delete)
+    db.commit()  #подтверждаем изменения в базе
+
+    return {"message": f"User with ID {user_data.id} has been deleted!"}
 
 
-    del_user = User(id = user_data.id) #удаляет юзера из БД
-    db.delete(del_user) #ставит в очередь 
-    db.commit() #сохраняет БД
-    db.refresh(del_user) #обновляет БД
-
-    return {'message': 'User has been deleted!'}
 
 @app.post('/login')
 def login(
@@ -80,7 +91,9 @@ def login(
     response.set_cookie(key=config.JWT_ACCESS_COOKIE_NAME, value=access_token) #добавляет токен в куки браузера
 
     return {'access_token': access_token, 'message': 'Logged in successfully!'}
-    
+
+
+
 @app.get('/auth')
 def auth(user_id=Depends(security.access_token_required)): #проверяет токен из куков на подлинность, при ошибке не выполняет код ниже
     return {

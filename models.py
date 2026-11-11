@@ -9,5 +9,5 @@ class User(Base): #вид БД (таблицы, строки, типы данн�
     username = Column(String, unique=True, index=True, nullable=False)
     hashed_pw = Column(String, nullable=False)
     in_active = Column(Boolean, default=True)
-
+    is_admin = Column(Boolean, default=False)
     
