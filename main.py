@@ -10,26 +10,20 @@ from database import engine, get_db
 from models import User, Base
 from schemas import UserCreate, UserLogin, UserDel
 
+
+load_dotenv() #загружаем переменные из файла .env
 Base.metadata.create_all(bind=engine) #создание бд при запуске приложения(на случай если она будет отсутсвовать)
 app = FastAPI()
 pwd_context = CryptContext(schemes=['bcrypt'], deprecated='auto') #схема хэша "bcrypt"
-load_dotenv() #загружаем переменные из файла .env
+
+SECRET_KEY = os.getenv('JWT_SECRET_KEY')
+COOKIE_NAME = os.getenv('JWT_ACCESS_COOKIE_NAME')
 
 # -------config-------
 config = AuthXConfig()
-config.JWT_SECRET_KEY = (
-    os.getenv('JWT_SECRET_KEY') #получаем секретный ключ из окружения
-)
-config.JWT_ACCESS_COOKIE_NAME = (
-    os.getenv('JWT_ACCESS_COOKIE_NAME')
-)
+config.JWT_SECRET_KEY = SECRET_KEY #получаем секретный ключ из окружения
+config.JWT_ACCESS_COOKIE_NAME = COOKIE_NAME
 config.JWT_TOKEN_LOCATION = ["cookies"]
-
-security = AuthX(config=config)
-config = AuthXConfig()
-config.JWT_SECRET_KEY = 'jwt_sk' #ключ проверки токена (создавать в .env пространстве)
-config.JWT_ACCESS_COOKIE_NAME = 'access_token'
-config.JWT_TOKEN_LOCATION = ['cookies'] #расположение токена (куки/заголовки)
 
 security = AuthX(config=config)
 
