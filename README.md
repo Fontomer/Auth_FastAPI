@@ -55,7 +55,7 @@ python -m venv .venv
 # Для macOS / Linux:
 source .venv/bin/activate
 # Для Windows:
-# .venv\Scripts\activate
+.venv\Scripts\activate
 ```
 
 3. Установите зависимости
